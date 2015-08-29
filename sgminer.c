@@ -7098,7 +7098,7 @@ bool test_nonce(struct work *work, uint32_t nonce)
 
   // for Neoscrypt, the diff1targ value is in work->target
   if (!safe_cmp(work->pool->algorithm.name, "neoscrypt") || !safe_cmp(work->pool->algorithm.name, "pluck")
-	  || !safe_cmp(work->pool->algorithm.name, "yescrypt") 
+	  || !safe_cmp(work->pool->algorithm.name, "yescrypt") || !safe_cmp(work->pool->algorithm.name, "bitzeny")
 	  || !safe_cmp(work->pool->algorithm.name, "yescrypt-multi")
 ) {
     diff1targ = ((uint32_t *)work->target)[7];

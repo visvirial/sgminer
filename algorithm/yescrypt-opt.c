@@ -137,7 +137,7 @@ yescrypt_init_shared(yescrypt_shared_t * shared,
 const uint8_t * param, size_t paramlen,
 uint64_t N, uint32_t r, uint32_t p,
 yescrypt_init_shared_flags_t flags, uint32_t mask,
-uint8_t * buf, size_t buflen)
+uint8_t * buf, size_t buflen, bool is_bitzeny)
 {
 	yescrypt_shared1_t * shared1 = &shared->shared1;
 	yescrypt_shared_t dummy, half1, half2;
@@ -160,7 +160,7 @@ uint8_t * buf, size_t buflen)
 	if (yescrypt_kdf(&dummy, shared1,
 		param, paramlen, NULL, 0, N, r, p, 0,
 		YESCRYPT_RW | YESCRYPT_PARALLEL_SMIX | __YESCRYPT_INIT_SHARED_1,
-		salt, sizeof(salt)))
+		salt, sizeof(salt), is_bitzeny))
 		goto out;
 
 	half1 = half2 = *shared;
@@ -173,19 +173,19 @@ uint8_t * buf, size_t buflen)
 	if (p > 1 && yescrypt_kdf(&half1, &half2.shared1,
 		param, paramlen, salt, sizeof(salt), N, r, p, 0,
 		YESCRYPT_RW | YESCRYPT_PARALLEL_SMIX | __YESCRYPT_INIT_SHARED_2,
-		salt, sizeof(salt)))
+		salt, sizeof(salt), is_bitzeny))
 		goto out;
 
 	if (yescrypt_kdf(&half2, &half1.shared1,
 		param, paramlen, salt, sizeof(salt), N, r, p, 0,
 		YESCRYPT_RW | YESCRYPT_PARALLEL_SMIX | __YESCRYPT_INIT_SHARED_1,
-		salt, sizeof(salt)))
+		salt, sizeof(salt), is_bitzeny))
 		goto out;
 
 	if (yescrypt_kdf(&half1, &half2.shared1,
 		param, paramlen, salt, sizeof(salt), N, r, p, 0,
 		YESCRYPT_RW | YESCRYPT_PARALLEL_SMIX | __YESCRYPT_INIT_SHARED_1,
-		buf, buflen))
+		buf, buflen, is_bitzeny))
 		goto out;
 
 	shared->mask1 = mask;
@@ -960,7 +960,7 @@ yescrypt_kdf(const yescrypt_shared_t * shared, yescrypt_local_t * local,
 	const uint8_t * passwd, size_t passwdlen,
 	const uint8_t * salt, size_t saltlen,
 	uint64_t N, uint32_t r, uint32_t p, uint32_t t, yescrypt_flags_t flags,
-	uint8_t * buf, size_t buflen)
+	uint8_t * buf, size_t buflen, bool is_bitzeny)
 {
 	yescrypt_region_t tmp;
 	uint64_t NROM;
@@ -1142,7 +1142,11 @@ yescrypt_kdf(const yescrypt_shared_t * shared, yescrypt_local_t * local,
 		{
 			HMAC_SHA256_CTX_Y ctx;
 			HMAC_SHA256_Init_Y(&ctx, buf, buflen);
-			HMAC_SHA256_Update_Y(&ctx, salt, saltlen);
+			if(is_bitzeny) {
+				HMAC_SHA256_Update_Y(&ctx, "Client Key", 10);
+			} else {
+				HMAC_SHA256_Update_Y(&ctx, salt, saltlen);
+			}
 			HMAC_SHA256_Final_Y((uint8_t *)sha256, &ctx);
 		}
 		/* Compute StoredKey */

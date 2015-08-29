@@ -45,14 +45,14 @@ be32enc_vect(uint32_t *dst, const uint32_t *src, uint32_t len)
 }
 
 /* Used externally as confirmation of correct OCL code */
-int yescrypt_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
+int yescrypt_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce, bool is_bitzeny)
 {
 	uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
 	uint32_t data[20], ohash[8];
 
 	be32enc_vect(data, (const uint32_t *)pdata, 19);
 	data[19] = htobe32(nonce);
-	yescrypt_hash((unsigned char*)data,(unsigned char*)ohash);
+	yescrypt_hash((unsigned char*)data,(unsigned char*)ohash, is_bitzeny);
 
 	tmp_hash7 = be32toh(ohash[7]);
 
@@ -70,7 +70,7 @@ int yescrypt_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t n
 	return 1;
 }
 
-void yescrypt_regenhash(struct work *work)
+static void yescrypt_regenhash_(struct work *work, bool is_bitzeny)
 {
         uint32_t data[20];
         uint32_t *nonce = (uint32_t *)(work->data + 76);
@@ -79,15 +79,20 @@ void yescrypt_regenhash(struct work *work)
         be32enc_vect(data, (const uint32_t *)work->data, 19);
         data[19] = htobe32(*nonce);	
 
-		yescrypt_hash((unsigned char*)data, (unsigned char*)ohash);
+		yescrypt_hash((unsigned char*)data, (unsigned char*)ohash, is_bitzeny);
         
 }
-
+void yescrypt_regenhash(struct work *work) {
+	yescrypt_regenhash_(work, false);
+}
+void bitzeny_regenhash(struct work *work) {
+	yescrypt_regenhash_(work, true);
+}
 
 bool scanhash_yescrypt(struct thr_info *thr, const unsigned char __maybe_unused *pmidstate,
 	unsigned char *pdata, unsigned char __maybe_unused *phash1,
 	unsigned char __maybe_unused *phash, const unsigned char *ptarget,
-	uint32_t max_nonce, uint32_t *last_nonce, uint32_t n)
+	uint32_t max_nonce, uint32_t *last_nonce, uint32_t n, bool is_bitzeny)
 {
 	uint32_t *nonce = (uint32_t *)(pdata + 76);
 	uint32_t data[20];
@@ -104,7 +109,7 @@ bool scanhash_yescrypt(struct thr_info *thr, const unsigned char __maybe_unused 
 		*nonce = ++n;
 		data[19] = (n);
 
-		yescrypt_hash((unsigned char*)data, (unsigned char*)ostate);
+		yescrypt_hash((unsigned char*)data, (unsigned char*)ostate, is_bitzeny);
 		tmp_hash7 = (ostate[7]);
 
 		applog(LOG_INFO, "data7 %08lx", (long unsigned int)data[7]);
@@ -126,3 +131,4 @@ bool scanhash_yescrypt(struct thr_info *thr, const unsigned char __maybe_unused 
 
 	return ret;
 }
+

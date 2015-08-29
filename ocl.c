@@ -517,7 +517,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 
 	  applog(LOG_DEBUG, "GPU %d: computing max. global thread count to %u", gpu, (unsigned)(cgpu->thread_concurrency));
    }
-  else if ((!safe_cmp(cgpu->algorithm.name, "yescrypt") ||
+  else if ((!safe_cmp(cgpu->algorithm.name, "yescrypt") || !safe_cmp(cgpu->algorithm.name, "bitzeny") ||
             !safe_cmp(algorithm->name, "yescrypt-multi")) && !cgpu->opt_tc) {
 		  size_t glob_thread_count;
 		  long max_int;
@@ -812,7 +812,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
       applog(LOG_DEBUG, "Neoscrypt buffer sizes: %lu RW, %lu R", (unsigned long)bufsize, (unsigned long)readbufsize);
     // scrypt/n-scrypt
     } 
-	else if (!safe_cmp(algorithm->name, "yescrypt") || !safe_cmp(algorithm->name, "yescrypt-multi")) {
+	else if (!safe_cmp(algorithm->name, "yescrypt") || !safe_cmp(algorithm->name, "yescrypt-multi") || !safe_cmp(algorithm->name, "bitzeny")) {
 		/* The scratch/pad-buffer needs 32kBytes memory per thread. */
 		bufsize = YESCRYPT_SCRATCHBUF_SIZE * cgpu->thread_concurrency;
 		buf1size = PLUCK_SECBUF_SIZE * cgpu->thread_concurrency;
@@ -881,7 +881,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
     }
 
 
-	if (!safe_cmp(algorithm->name, "yescrypt") || !safe_cmp(algorithm->name, "yescrypt-multi")) {
+	if (!safe_cmp(algorithm->name, "yescrypt") || !safe_cmp(algorithm->name, "yescrypt-multi") || !safe_cmp(algorithm->name, "bitzeny")) {
 // need additionnal buffers
 		clState->buffer1 = clCreateBuffer(clState->context, CL_MEM_READ_WRITE, buf1size, NULL, &status);
 		if (status != CL_SUCCESS && !clState->buffer1) {

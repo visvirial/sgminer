@@ -106,7 +106,7 @@ uint8_t *
 yescrypt_r(const yescrypt_shared_t * shared, yescrypt_local_t * local,
     const uint8_t * passwd, size_t passwdlen,
     const uint8_t * setting,
-    uint8_t * buf, size_t buflen)
+    uint8_t * buf, size_t buflen, bool is_bitzeny)
 {
 	uint8_t hash[HASH_SIZE];
 	const uint8_t * src, * salt;
@@ -200,7 +200,7 @@ yescrypt_r(const yescrypt_shared_t * shared, yescrypt_local_t * local,
 
 fflush(stdout);
 	if (yescrypt_kdf(shared, local, passwd, passwdlen, salt, saltlen,
-	    N, r, p, 0, flags, hash, sizeof(hash)))
+	    N, r, p, 0, flags, hash, sizeof(hash), is_bitzeny))
 	    {
         fflush(stdout);
 		return NULL; 
@@ -225,21 +225,21 @@ fflush(stdout);
 }
 
 uint8_t *
-yescrypt(const uint8_t * passwd, const uint8_t * setting)
+yescrypt(const uint8_t * passwd, const uint8_t * setting, bool is_bitzeny)
 {
 	static uint8_t buf[4 + 1 + 5 + 5 + BYTES2CHARS(32) + 1 + HASH_LEN + 1];
 	yescrypt_shared_t shared;
 	yescrypt_local_t local;
 	uint8_t * retval;
 	if (yescrypt_init_shared(&shared, NULL, 0,
-	    0, 0, 0, YESCRYPT_SHARED_DEFAULTS, 0, NULL, 0))
+	    0, 0, 0, YESCRYPT_SHARED_DEFAULTS, 0, NULL, 0, is_bitzeny))
 		return NULL;
 	if (yescrypt_init_local(&local)) {
 		yescrypt_free_shared(&shared);
 		return NULL;
 	}
 	retval = yescrypt_r(&shared, &local,
-	    passwd, 80, setting, buf, sizeof(buf));
+	    passwd, 80, setting, buf, sizeof(buf), is_bitzeny);
         // printf("hashse='%s'\n", (char *)retval);
 	if (yescrypt_free_local(&local)) {
 		yescrypt_free_shared(&shared);
@@ -323,7 +323,7 @@ yescrypt_gensalt(uint32_t N_log2, uint32_t r, uint32_t p,
 static int
 yescrypt_bsty(const uint8_t * passwd, size_t passwdlen,
     const uint8_t * salt, size_t saltlen, uint64_t N, uint32_t r, uint32_t p,
-    uint8_t * buf, size_t buflen)
+    uint8_t * buf, size_t buflen, bool is_bitzeny)
 {
 	static __thread int initialized = 0;
 	static __thread yescrypt_shared_t shared;
@@ -338,7 +338,7 @@ yescrypt_bsty(const uint8_t * passwd, size_t passwdlen,
 /* "shared" could in fact be shared, but it's simpler to keep it private
  * along with "local".  It's dummy and tiny anyway. */
 		if (yescrypt_init_shared(&shared, NULL, 0,
-		    0, 0, 0, YESCRYPT_SHARED_DEFAULTS, 0, NULL, 0))
+		    0, 0, 0, YESCRYPT_SHARED_DEFAULTS, 0, NULL, 0, is_bitzeny))
 			return -1;
 		if (yescrypt_init_local(&local)) {
 			yescrypt_free_shared(&shared);
@@ -348,13 +348,13 @@ yescrypt_bsty(const uint8_t * passwd, size_t passwdlen,
  	}
 	retval = yescrypt_kdf(&shared, &local,
 	    passwd, passwdlen, salt, saltlen, N, r, p, 0, YESCRYPT_FLAGS,
-	    buf, buflen);		
+	    buf, buflen, is_bitzeny);		
 
 	return retval;
 }
 
-void yescrypt_hash(const unsigned char *input, unsigned char *output)
+void yescrypt_hash(const unsigned char *input, unsigned char *output, bool is_bitzeny)
 {
 
-   yescrypt_bsty((const uint8_t *)input, 80, (const uint8_t *) input, 80, 2048, 8, 1, (uint8_t *)output, 32);
+   yescrypt_bsty((const uint8_t *)input, 80, (const uint8_t *) input, 80, 2048, 8, 1, (uint8_t *)output, 32, is_bitzeny);
 }

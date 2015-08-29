@@ -32,6 +32,7 @@ typedef enum {
   ALGO_PLUCK,
   ALGO_YESCRYPT,
   ALGO_YESCRYPT_MULTI,
+  ALGO_BITZENY,
 } algorithm_type_t;
 
 extern const char *algorithm_type_str[];

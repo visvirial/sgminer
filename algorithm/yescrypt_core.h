@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <stdlib.h> /* for size_t */
 #include <errno.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,7 +41,7 @@ extern "C" {
 
 
 //extern void yescrypt_hash_sp(const unsigned char *input, unsigned char *output);
-extern void yescrypt_hash(const unsigned char *input, unsigned char *output);
+extern void yescrypt_hash(const unsigned char *input, unsigned char *output, bool is_bitzeny);
 
 
 
@@ -160,7 +161,7 @@ extern int yescrypt_init_shared(yescrypt_shared_t * __shared,
 	const uint8_t * __param, size_t __paramlen,
 	uint64_t __N, uint32_t __r, uint32_t __p,
 	yescrypt_init_shared_flags_t __flags, uint32_t __mask,
-	uint8_t * __buf, size_t __buflen);
+	uint8_t * __buf, size_t __buflen, bool is_bitzeny);
 
 /**
  * yescrypt_free_shared(shared):
@@ -296,7 +297,7 @@ extern int yescrypt_kdf(const yescrypt_shared_t * __shared,
 	const uint8_t * __salt, size_t __saltlen,
 	uint64_t __N, uint32_t __r, uint32_t __p, uint32_t __t,
 	yescrypt_flags_t __flags,
-	uint8_t * __buf, size_t __buflen);
+	uint8_t * __buf, size_t __buflen, bool is_bitzeny);
 
 /**
  * yescrypt_r(shared, local, passwd, passwdlen, setting, buf, buflen):
@@ -316,7 +317,7 @@ extern uint8_t * yescrypt_r(const yescrypt_shared_t * __shared,
 	yescrypt_local_t * __local,
 	const uint8_t * __passwd, size_t __passwdlen,
 	const uint8_t * __setting,
-	uint8_t * __buf, size_t __buflen);
+	uint8_t * __buf, size_t __buflen, bool is_bitzeny);
 
 /**
  * yescrypt(passwd, setting):
@@ -334,7 +335,7 @@ extern uint8_t * yescrypt_r(const yescrypt_shared_t * __shared,
  *
  * MT-unsafe.
  */
-extern uint8_t * yescrypt(const uint8_t * __passwd, const uint8_t * __setting);
+extern uint8_t * yescrypt(const uint8_t * __passwd, const uint8_t * __setting, bool is_bitzeny);
 
 /**
  * yescrypt_gensalt_r(N_log2, r, p, flags, src, srclen, buf, buflen):

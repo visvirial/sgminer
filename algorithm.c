@@ -63,7 +63,8 @@ const char *algorithm_type_str[] = {
   "Lyra2REv2"
   "pluck",
   "yescrypt",
-  "yescrypt-multi"
+  "yescrypt-multi",
+  "bitzeny"
 };
 
 void sha256(const unsigned char *message, unsigned int len, unsigned char *digest)
@@ -329,6 +330,33 @@ static cl_int queue_yescrypt_multikernel(_clState *clState, dev_blk_ctx *blk, __
 	CL_SET_ARG(clState->buffer2);
 	CL_SET_ARG(clState->buffer3);
     CL_SET_ARG(le_target);
+
+	return status;
+}
+
+static cl_int queue_bitzeny_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+	cl_kernel *kernel = &clState->kernel;
+	unsigned int num = 0;
+	cl_uint le_target;
+	cl_int status = 0;
+
+
+//	le_target = (*(cl_uint *)(blk->work->device_target + 28));
+	le_target = (cl_uint)le32toh(((uint32_t *)blk->work->/*device_*/target)[7]);
+//	le_target = (cl_uint)((uint32_t *)blk->work->target)[7];
+
+
+//	memcpy(clState->cldata, blk->work->data, 80);
+	flip80(clState->cldata, blk->work->data);
+	status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
+
+	CL_SET_ARG(clState->CLbuffer0);
+	CL_SET_ARG(clState->outputBuffer);
+	CL_SET_ARG(clState->padbuffer8);
+	CL_SET_ARG(clState->buffer1);
+	CL_SET_ARG(clState->buffer2);
+	CL_SET_ARG(le_target);
 
 	return status;
 }
@@ -947,6 +975,11 @@ static algorithm_settings_t algos[] = {
                   { a, ALGO_YESCRYPT_MULTI, "", 1, 65536, 65536, 0, 0, 0xFF, 0xFFFF000000000000ULL, 0x0000ffffUL, 6,-1,CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE , yescrypt_regenhash, queue_yescrypt_multikernel, gen_hash, append_neoscrypt_compiler_options}
   A_YESCRYPT_MULTI("yescrypt-multi"),
 #undef A_YESCRYPT_MULTI
+
+#define A_BITZENY(a) \
+                  { a, ALGO_BITZENY, "", 1, 65536, 65536, 0, 0, 0xFF, 0xFFFF000000000000ULL, 0x0000ffffUL, 0,-1,CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE , bitzeny_regenhash, queue_bitzeny_kernel, gen_hash, append_neoscrypt_compiler_options}
+  A_BITZENY("bitzeny"),
+#undef A_BITZENY
 
 
   // kernels starting from this will have difficulty calculated by using quarkcoin algorithm
